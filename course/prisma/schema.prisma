@@ -1,0 +1,28 @@
+// schema.prisma
+datasource db {
+  provider = "postgresql"  // or use MySQL/SQLite based on your database
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Course {
+  id         Int      @id @default(autoincrement())
+  courseName String
+  courseCode String   @unique
+  instructor String
+
+  registrations CourseRegistration[]
+}
+
+model CourseRegistration {
+  id        Int    @id @default(autoincrement())
+  courseId  Int
+  studentId Int
+
+  course    Course @relation(fields: [courseId], references: [id])
+
+  @@unique([courseId, studentId])  // Correctly define composite unique constraint
+}
