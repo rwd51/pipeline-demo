@@ -39,7 +39,7 @@ services:
       PORT: 8000
       DATABASE_URL: postgresql://postgres:pass@db:5432/mydatabase
       NODE_ENV: dev
-      JWT_SECRET: U~A^O8vk510OZswgrvwwr4$%@&*(@)/*frwrgvwrs24422342
+      JWT_SECRET: "U~A^O8vk510OZswgrvwwr4$%@&*(@)/*frwrgvwrs24422342"
       RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
       EXCHANGE_NAME: user
     volumes:
@@ -61,7 +61,7 @@ services:
       PORT: 8001
       DATABASE_URL: postgresql://postgres:pass@db:5432/mydatabase
       NODE_ENV: dev
-      JWT_SECRET: U~A^O8vk510OZswgrvwwr4$%@&*(@)/*frwrgvwrs24422342
+      JWT_SECRET: "U~A^O8vk510OZswgrvwwr4$%@&*(@)/*frwrgvwrs24422342"
       RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
       QUEUE_NAME: course
     volumes:
