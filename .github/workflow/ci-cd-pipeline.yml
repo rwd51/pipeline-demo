@@ -1,0 +1,88 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    services:
+      db:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: pass
+          POSTGRES_DB: mydatabase
+        ports:
+          - 5433:5432
+        volumes:
+          - postgres_data:/var/lib/postgresql/data
+          - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+        healthcheck:
+          test: ["CMD-SHELL", "pg_isready -U postgres"]
+          interval: 10s
+          timeout: 5s
+          retries: 5
+
+      rabbitmq:
+        image: rabbitmq:3-management
+        env:
+          RABBITMQ_DEFAULT_USER: guest
+          RABBITMQ_DEFAULT_PASS: guest
+        ports:
+          - 5672:5672
+          - 15672:15672
+        healthcheck:
+          test: ["CMD", "rabbitmqctl", "status"]
+          interval: 30s
+          timeout: 10s
+          retries: 5
+
+  test:
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16.x'
+
+      - name: Install Dependencies
+        run: npm install --force
+
+      - name: Set up Environment Variables
+        run: |
+          echo "DATABASE_URL=postgresql://postgres:pass@localhost:5433/mydatabase" >> .env
+          echo "JWT_SECRET=U~A^O8vk510OZswgrvwwr4$%@&*(@)/*frwrgvwrs24422342" >> .env
+
+      - name: Build and Run Docker Containers
+        run: docker-compose up --build -d
+
+      - name: Wait for services to be ready
+        run: |
+          while ! curl -s http://localhost:5433; do
+            echo "Waiting for PostgreSQL to be ready..."
+            sleep 5
+          done
+          while ! curl -s http://localhost:5672; do
+            echo "Waiting for RabbitMQ to be ready..."
+            sleep 5
+          done
+
+      - name: Run User Tests
+        run: npm run test --prefix user
+
+
+    volumes:
+      postgres_data:
+
