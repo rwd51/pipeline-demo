@@ -1,10 +1,16 @@
+
+
 // db.js
 const { Pool } = require('pg');
-require('dotenv').config({ path: '.prod.env' });
-
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  user: 'postgres',
+  host: 'db',  // Use the service name defined in your Docker Compose
+  database: 'mydatabase',
+  password: 'pass',
+  port: 5432,
 });
 
-module.exports = pool;
+module.exports = { pool };
+
+
