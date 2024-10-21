@@ -3,7 +3,7 @@ name: CI
 on:
   push:
     branches:
-      - main  # or the branch you want to trigger on
+      - main
   pull_request:
     branches:
       - main
@@ -12,22 +12,52 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    services:
+      db:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: pass
+          POSTGRES_DB: mydatabase
+        ports:
+          - "5433:5432"
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      rabbitmq:
+        image: rabbitmq:3-management
+        env:
+          RABBITMQ_DEFAULT_USER: guest
+          RABBITMQ_DEFAULT_PASS: guest
+        ports:
+          - "5672:5672"
+          - "15672:15672"  # RabbitMQ Management UI
+        options: >-
+          --health-cmd "rabbitmqctl status"
+          --health-interval 30s
+          --health-timeout 10s
+          --health-retries 5
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Build Docker images
+        run: docker-compose build
+
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: '18'  # Specify the Node.js version you want to use
+          node-version: '18'
 
-      # Build and test the user service
-      - name: Install dependencies for user service
-        run: |
-          cd user
-          npm install
+      - name: Install dependencies
+        run: npm install --prefix user  # Adjust path if needed
 
-      - name: Run tests for user service
-        run: |
-          cd user
-          npm test
+      - name: Run tests
+        run: npm test --prefix user  # Adjust path if needed
